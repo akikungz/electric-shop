@@ -1,18 +1,12 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
-import { categoryLabels, products } from "@/data/products";
+import { categoryLabels } from "@/data/products";
 import { SITE_NAME, SITE_URL } from "@/lib/seo";
 import type { Category } from "@/types/domain";
 import { CategoryClient } from "./category-client";
 
 const categories = Object.keys(categoryLabels) as Category[];
 export const revalidate = 3600;
-
-export async function generateStaticParams() {
-  return categories.map((category) => ({
-    category,
-  }));
-}
 
 export async function generateMetadata({
   params,
@@ -65,15 +59,10 @@ export default async function CategoryPage({
     return notFound();
   }
 
-  const list = products.filter(
-    (product) => product.category === resolvedCategory,
-  );
-
   return (
     <CategoryClient
       category={resolvedCategory}
       categoryLabel={categoryLabels[resolvedCategory]}
-      products={list}
     />
   );
 }

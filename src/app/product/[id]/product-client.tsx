@@ -4,11 +4,24 @@ import { useState } from "react";
 import { PageShell } from "@/components/page-shell";
 import { useShop } from "@/context/shop-context";
 import { currency } from "@/lib/format";
-import type { Product } from "@/types/domain";
 
-export function ProductClient({ product }: { product: Product }) {
-  const { locale, addToCart } = useShop();
+export function ProductClient({ productId }: { productId: string }) {
+  const { locale, addToCart, getProductById } = useShop();
   const [qty, setQty] = useState(1);
+  const product = getProductById(productId);
+
+  if (!product) {
+    return (
+      <PageShell
+        title={locale === "th" ? "ไม่พบสินค้า" : "Product Not Found"}
+        subtitle={
+          locale === "th" ? "ลองกลับไปหน้าหลัก" : "Try returning to home page."
+        }
+      >
+        <div className="soft-card rounded-2xl p-6" />
+      </PageShell>
+    );
+  }
 
   return (
     <PageShell

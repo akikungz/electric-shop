@@ -1,11 +1,11 @@
 "use client";
 
 import Link from "next/link";
-import { use } from "react";
+import { use, useEffect, useState } from "react";
 import { PageShell } from "@/components/page-shell";
 import { useShop } from "@/context/shop-context";
-import { findProductById } from "@/data/products";
 import { currency, mapOrderStatus, paymentLabel } from "@/lib/format";
+import type { Order } from "@/types/domain";
 
 export default function OrderConfirmationPage({
   params,
@@ -13,8 +13,25 @@ export default function OrderConfirmationPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  const { locale, getOrderById } = useShop();
-  const order = getOrderById(id);
+  const { locale, getOrderById, fetchOrderById, getProductById } = useShop();
+  const [order, setOrder] = useState<Order | undefined>(() => getOrderById(id));
+
+  useEffect(() => {
+    if (order) {
+      return;
+    }
+
+    let mounted = true;
+    void fetchOrderById(id).then((nextOrder) => {
+      if (mounted) {
+        setOrder(nextOrder ?? undefined);
+      }
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, [fetchOrderById, id, order]);
 
   if (!order) {
     return (
@@ -60,7 +77,7 @@ export default function OrderConfirmationPage({
 
         <div className="mt-6 space-y-2">
           {order.items.map((item) => {
-            const product = findProductById(item.productId);
+            const product = getProductById(item.productId);
             return (
               <div
                 key={item.productId}

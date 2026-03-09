@@ -52,10 +52,7 @@ export function ProductCard({ product }: { product: Product }) {
           </div>
         </div>
         <CardTitle className="line-clamp-1 text-lg font-bold transition-colors group-hover:text-primary">
-          <Link
-            href={`/product/${product.id}`}
-            className="before:absolute before:inset-0"
-          >
+          <Link href={`/product/${product.id}`} className="relative z-[1]">
             {product.name}
           </Link>
         </CardTitle>
@@ -80,11 +77,12 @@ export function ProductCard({ product }: { product: Product }) {
           type="button"
           onClick={(e) => {
             e.preventDefault();
+            e.stopPropagation();
             addToCart(product.id, 1);
           }}
           className={cn(
             "w-full gap-2 rounded-xl border border-transparent transition-all duration-300",
-            "bg-foreground text-background shadow-md hover:bg-primary hover:text-primary-foreground hover:shadow-lg dark:bg-white dark:text-black dark:hover:bg-primary dark:hover:text-primary-foreground",
+            "bg-foreground text-background shadow-md hover:bg-primary hover:text-primary-foreground hover:shadow-lg dark:bg-white dark:text-black dark:hover:bg-primary dark:hover:text-primary-foreground cursor-pointer",
           )}
         >
           <ShoppingCart className="h-4 w-4" />

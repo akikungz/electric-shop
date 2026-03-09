@@ -5,10 +5,9 @@ import Link from "next/link";
 import { ProductCard } from "@/components/product-card";
 import { Button } from "@/components/ui/button";
 import { useShop } from "@/context/shop-context";
-import type { Product } from "@/types/domain";
 
-export function HomeClient({ products }: { products: Product[] }) {
-  const { locale } = useShop();
+export function HomeClient() {
+  const { locale, products } = useShop();
 
   return (
     <main className="w-full flex-1">

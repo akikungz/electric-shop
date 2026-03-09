@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { PageShell } from "@/components/page-shell";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,7 +16,19 @@ import { Input } from "@/components/ui/input";
 import { useShop } from "@/context/shop-context";
 
 export default function RegisterPage() {
-  const { locale, navigate } = useShop();
+  const { locale, navigate, register, isAuthenticated } = useShop();
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/profile");
+    }
+  }, [isAuthenticated, navigate]);
 
   return (
     <PageShell
@@ -28,9 +41,26 @@ export default function RegisterPage() {
     >
       <form
         className="mx-auto max-w-xl"
-        onSubmit={(event) => {
+        onSubmit={async (event) => {
           event.preventDefault();
-          navigate("/login");
+          setErrorMessage(null);
+          setIsSubmitting(true);
+
+          const result = await register({
+            name,
+            phone,
+            email,
+            password,
+          });
+
+          setIsSubmitting(false);
+
+          if (!result.success) {
+            setErrorMessage(result.message ?? "Register failed");
+            return;
+          }
+
+          navigate("/profile");
         }}
       >
         <Card>
@@ -46,17 +76,32 @@ export default function RegisterPage() {
                   <FieldLabel htmlFor="register-name">
                     {locale === "th" ? "ชื่อ" : "Name"}
                   </FieldLabel>
-                  <Input id="register-name" required />
+                  <Input
+                    id="register-name"
+                    required
+                    value={name}
+                    onChange={(event) => setName(event.target.value)}
+                  />
                 </Field>
                 <Field>
                   <FieldLabel htmlFor="register-phone">
                     {locale === "th" ? "เบอร์โทรศัพท์" : "Phone"}
                   </FieldLabel>
-                  <Input id="register-phone" required />
+                  <Input
+                    id="register-phone"
+                    required
+                    value={phone}
+                    onChange={(event) => setPhone(event.target.value)}
+                  />
                 </Field>
                 <Field>
                   <FieldLabel htmlFor="register-email">Email</FieldLabel>
-                  <Input id="register-email" type="email" />
+                  <Input
+                    id="register-email"
+                    type="email"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                  />
                 </Field>
                 <Field>
                   <FieldLabel htmlFor="register-password">Password</FieldLabel>
@@ -65,13 +110,18 @@ export default function RegisterPage() {
                     required
                     type="password"
                     minLength={8}
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
                   />
                 </Field>
               </FieldGroup>
             </FieldSet>
+            {errorMessage ? (
+              <p className="mt-4 text-sm text-destructive">{errorMessage}</p>
+            ) : null}
           </CardContent>
           <CardFooter className="flex flex-col items-start gap-3">
-            <Button type="submit">
+            <Button type="submit" disabled={isSubmitting}>
               {locale === "th" ? "สร้างบัญชี" : "Create Account"}
             </Button>
             <p className="text-sm text-muted-foreground">

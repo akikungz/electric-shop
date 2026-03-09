@@ -26,7 +26,7 @@ export default function CartPage() {
       <section className="grid gap-5 lg:grid-cols-[1.8fr_1fr]">
         <div className="space-y-4">
           {cartItemsDetailed.length === 0 ? (
-            <div className="soft-card rounded-2xl p-6 text-sm text-[#335168]">
+            <div className="soft-card rounded-2xl p-6 text-sm text-muted-foreground">
               {locale === "th" ? "ตะกร้าว่างอยู่" : "Your cart is empty."}
             </div>
           ) : null}
@@ -49,13 +49,13 @@ export default function CartPage() {
                   style={{ backgroundImage: `url(${productImage})` }}
                 />
                 <div>
-                  <h2 className="text-lg font-semibold text-[#0d1b2a]">
+                  <h2 className="text-lg font-semibold text-foreground">
                     {productName}
                   </h2>
-                  <p className="text-sm text-[#4a5a68]">
+                  <p className="text-sm text-muted-foreground">
                     {currency(unitPrice, locale)}
                   </p>
-                  <p className="text-sm font-semibold text-[#023047]">
+                  <p className="text-sm font-semibold text-foreground">
                     {currency(lineTotal, locale)}
                   </p>
                 </div>
@@ -71,12 +71,12 @@ export default function CartPage() {
                         Number(event.target.value) || 1,
                       )
                     }
-                    className="w-16 rounded-lg border border-black/15 bg-white px-2 py-1"
+                    className="w-16 rounded-lg border border-border bg-background/80 px-2 py-1 text-foreground"
                   />
                   <button
                     type="button"
                     onClick={() => removeCartItem(item.productId)}
-                    className="rounded-lg border border-[#8f3f00]/20 px-2 py-1 text-sm text-[#8f3f00]"
+                    className="rounded-lg border border-destructive/30 px-2 py-1 text-sm text-destructive"
                   >
                     {locale === "th" ? "ลบ" : "Remove"}
                   </button>
@@ -87,13 +87,13 @@ export default function CartPage() {
         </div>
 
         <aside className="soft-card h-fit rounded-2xl p-5">
-          <h2 className="text-xl font-semibold text-[#0d1b2a]">
+          <h2 className="text-xl font-semibold text-foreground">
             {locale === "th" ? "สรุปยอด" : "Summary"}
           </h2>
-          <p className="mt-4 text-sm text-[#4a5a68]">
+          <p className="mt-4 text-sm text-muted-foreground">
             {locale === "th" ? "ยอดรวม" : "Subtotal"}
           </p>
-          <p className="text-2xl font-bold text-[#023047]">
+          <p className="text-2xl font-bold text-foreground">
             {currency(subtotal, locale)}
           </p>
           <Link

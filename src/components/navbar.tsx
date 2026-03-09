@@ -6,13 +6,17 @@ import {
   Info,
   LayoutGrid,
   LogIn,
+  LogOut,
   Menu,
+  Moon,
   Search,
   ShoppingCart,
+  Sun,
   User,
   UserPlus,
 } from "lucide-react";
 import Link from "next/link";
+import { useCallback, useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
@@ -27,7 +31,34 @@ import { categoryLabels } from "@/data/products";
 import { cn } from "@/lib/utils";
 
 export function Navbar() {
-  const { cartCount, locale, toggleLocale, pathname } = useShop();
+  const { cartCount, locale, toggleLocale, pathname, isAuthenticated, logout } =
+    useShop();
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+
+  const applyTheme = useCallback((nextTheme: "light" | "dark") => {
+    const root = document.documentElement;
+    root.classList.toggle("dark", nextTheme === "dark");
+    localStorage.setItem("electric-shop-theme", nextTheme);
+    setTheme(nextTheme);
+  }, []);
+
+  useEffect(() => {
+    const saved = localStorage.getItem("electric-shop-theme");
+
+    if (saved === "light" || saved === "dark") {
+      applyTheme(saved);
+      return;
+    }
+
+    const preferredDark = window.matchMedia(
+      "(prefers-color-scheme: dark)",
+    ).matches;
+    applyTheme(preferredDark ? "dark" : "light");
+  }, [applyTheme]);
+
+  const toggleTheme = useCallback(() => {
+    applyTheme(theme === "dark" ? "light" : "dark");
+  }, [applyTheme, theme]);
 
   const text = {
     en: {
@@ -38,7 +69,9 @@ export function Navbar() {
       search: "Search",
       login: "Login",
       register: "Register",
+      logout: "Sign Out",
       about: "About",
+      theme: "Toggle theme",
     },
     th: {
       logo: "ร้านเครื่องใช้ไฟฟ้า",
@@ -48,12 +81,14 @@ export function Navbar() {
       search: "ค้นหา",
       login: "เข้าสู่ระบบ",
       register: "ลงทะเบียน",
+      logout: "ออกจากระบบ",
       about: "เกี่ยวกับเรา",
+      theme: "สลับธีม",
     },
   };
 
   return (
-    <header className="sticky top-0 z-50 glass-nav transition-all duration-300">
+    <header className="fixed inset-x-0 top-0 z-50 glass-nav transition-all duration-300">
       <nav className="mx-auto flex w-full max-w-7xl items-center justify-between gap-4 px-4 py-3 md:px-8">
         <div className="flex items-center gap-6">
           <Button
@@ -156,21 +191,46 @@ export function Navbar() {
                 </Link>
               </DropdownMenuItem>
               <Separator className="my-1" />
-              <DropdownMenuItem asChild className="rounded-md cursor-pointer">
-                <Link href="/login" className="flex items-center gap-3 w-full">
-                  <LogIn className="h-4 w-4 text-muted-foreground" />{" "}
-                  {text[locale].login}
-                </Link>
-              </DropdownMenuItem>
-              <DropdownMenuItem asChild className="rounded-md cursor-pointer">
-                <Link
-                  href="/register"
-                  className="flex items-center gap-3 w-full"
+              {isAuthenticated ? (
+                <DropdownMenuItem
+                  className="rounded-md cursor-pointer"
+                  onClick={() => {
+                    void logout();
+                  }}
                 >
-                  <UserPlus className="h-4 w-4 text-muted-foreground" />{" "}
-                  {text[locale].register}
-                </Link>
-              </DropdownMenuItem>
+                  <span className="flex items-center gap-3 w-full">
+                    <LogOut className="h-4 w-4 text-muted-foreground" />
+                    {text[locale].logout}
+                  </span>
+                </DropdownMenuItem>
+              ) : (
+                <>
+                  <DropdownMenuItem
+                    asChild
+                    className="rounded-md cursor-pointer"
+                  >
+                    <Link
+                      href="/login"
+                      className="flex items-center gap-3 w-full"
+                    >
+                      <LogIn className="h-4 w-4 text-muted-foreground" />
+                      {text[locale].login}
+                    </Link>
+                  </DropdownMenuItem>
+                  <DropdownMenuItem
+                    asChild
+                    className="rounded-md cursor-pointer"
+                  >
+                    <Link
+                      href="/register"
+                      className="flex items-center gap-3 w-full"
+                    >
+                      <UserPlus className="h-4 w-4 text-muted-foreground" />
+                      {text[locale].register}
+                    </Link>
+                  </DropdownMenuItem>
+                </>
+              )}
               <Separator className="my-1" />
               <DropdownMenuItem asChild className="rounded-md cursor-pointer">
                 <Link href="/about" className="flex items-center gap-3 w-full">
@@ -210,6 +270,22 @@ export function Navbar() {
             orientation="vertical"
             className="hidden sm:block h-5 opacity-30 mx-1"
           />
+
+          <Button
+            type="button"
+            onClick={toggleTheme}
+            variant="ghost"
+            size="icon"
+            className="rounded-full w-9 h-9 relative hover:bg-secondary/80"
+            title={text[locale].theme}
+          >
+            {theme === "dark" ? (
+              <Sun className="h-4 w-4 text-muted-foreground" />
+            ) : (
+              <Moon className="h-4 w-4 text-muted-foreground" />
+            )}
+            <span className="sr-only">{text[locale].theme}</span>
+          </Button>
 
           <Button
             type="button"

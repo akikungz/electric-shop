@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useEffect, useState } from "react";
 import { PageShell } from "@/components/page-shell";
 import { Button } from "@/components/ui/button";
 import {
@@ -15,7 +16,17 @@ import { Input } from "@/components/ui/input";
 import { useShop } from "@/context/shop-context";
 
 export default function LoginPage() {
-  const { locale, navigate } = useShop();
+  const { locale, navigate, login, isAuthenticated } = useShop();
+  const [identity, setIdentity] = useState("");
+  const [password, setPassword] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/profile");
+    }
+  }, [isAuthenticated, navigate]);
 
   return (
     <PageShell
@@ -28,8 +39,19 @@ export default function LoginPage() {
     >
       <form
         className="mx-auto max-w-xl"
-        onSubmit={(event) => {
+        onSubmit={async (event) => {
           event.preventDefault();
+          setErrorMessage(null);
+          setIsSubmitting(true);
+
+          const result = await login(identity, password);
+          setIsSubmitting(false);
+
+          if (!result.success) {
+            setErrorMessage(result.message ?? "Login failed");
+            return;
+          }
+
           navigate("/");
         }}
       >
@@ -48,6 +70,8 @@ export default function LoginPage() {
                     id="login-identity"
                     required
                     placeholder="name@example.com"
+                    value={identity}
+                    onChange={(event) => setIdentity(event.target.value)}
                   />
                 </Field>
                 <Field>
@@ -57,13 +81,18 @@ export default function LoginPage() {
                     required
                     type="password"
                     placeholder="********"
+                    value={password}
+                    onChange={(event) => setPassword(event.target.value)}
                   />
                 </Field>
               </FieldGroup>
             </FieldSet>
+            {errorMessage ? (
+              <p className="mt-4 text-sm text-destructive">{errorMessage}</p>
+            ) : null}
           </CardContent>
           <CardFooter className="flex flex-col items-start gap-3">
-            <Button type="submit">
+            <Button type="submit" disabled={isSubmitting}>
               {locale === "th" ? "เข้าสู่ระบบ" : "Login"}
             </Button>
             <p className="text-sm text-muted-foreground">

@@ -74,9 +74,9 @@ export default function CheckoutPage() {
     >
       <form
         className="mx-auto max-w-3xl"
-        onSubmit={(event) => {
+        onSubmit={async (event) => {
           event.preventDefault();
-          const orderId = checkout({
+          const orderId = await checkout({
             address: { line1, district, province, postalCode },
             phone,
             paymentMethod,

@@ -3,17 +3,17 @@
 import { PageShell } from "@/components/page-shell";
 import { ProductCard } from "@/components/product-card";
 import { useShop } from "@/context/shop-context";
-import type { Category, Product } from "@/types/domain";
+import type { Category } from "@/types/domain";
 
 export function CategoryClient({
+  category,
   categoryLabel,
-  products,
 }: {
   category: Category;
   categoryLabel: string;
-  products: Product[];
 }) {
-  const { locale } = useShop();
+  const { locale, getProductsByCategory } = useShop();
+  const products = getProductsByCategory(category);
 
   return (
     <PageShell

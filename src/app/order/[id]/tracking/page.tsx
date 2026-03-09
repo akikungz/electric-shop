@@ -1,9 +1,10 @@
 "use client";
 
-import { use } from "react";
+import { use, useEffect, useState } from "react";
 import { PageShell } from "@/components/page-shell";
 import { useShop } from "@/context/shop-context";
 import { mapOrderStatus } from "@/lib/format";
+import type { Order } from "@/types/domain";
 
 const steps = ["pending", "paid", "packed", "shipped", "delivered"];
 
@@ -13,8 +14,25 @@ export default function OrderTrackingPage({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  const { locale, getOrderById } = useShop();
-  const order = getOrderById(id);
+  const { locale, getOrderById, fetchOrderById } = useShop();
+  const [order, setOrder] = useState<Order | undefined>(() => getOrderById(id));
+
+  useEffect(() => {
+    if (order) {
+      return;
+    }
+
+    let mounted = true;
+    void fetchOrderById(id).then((nextOrder) => {
+      if (mounted) {
+        setOrder(nextOrder ?? undefined);
+      }
+    });
+
+    return () => {
+      mounted = false;
+    };
+  }, [fetchOrderById, id, order]);
   const index = Math.max(0, steps.indexOf(order?.orderStatus ?? "pending"));
 
   return (

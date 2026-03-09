@@ -79,7 +79,7 @@ export default function RootLayout({
       >
         <script type="application/ld+json">{JSON.stringify(orgSchema)}</script>
         <Providers>
-          <div className="app-bg flex min-h-screen flex-col relative w-full overflow-hidden">
+          <div className="app-bg relative flex min-h-screen w-full flex-col overflow-x-hidden pt-16">
             <Navbar />
             <div className="flex-1 w-full relative z-10">{children}</div>
             <div className="w-full relative z-20 mt-auto">
