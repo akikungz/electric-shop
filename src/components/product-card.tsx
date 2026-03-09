@@ -1,5 +1,6 @@
 "use client";
 
+import { ShoppingCart, Star } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -11,11 +12,10 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { ShoppingCart, Star } from "lucide-react";
 import { useShop } from "@/context/shop-context";
 import { currency } from "@/lib/format";
-import type { Product } from "@/types/domain";
 import { cn } from "@/lib/utils";
+import type { Product } from "@/types/domain";
 
 export function ProductCard({ product }: { product: Product }) {
   const { addToCart, locale } = useShop();
@@ -37,10 +37,13 @@ export function ProductCard({ product }: { product: Product }) {
         />
         <div className="absolute inset-0 bg-black/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
       </Link>
-      
+
       <CardHeader className="flex-none p-5 pb-2">
         <div className="mb-2 flex items-center justify-between space-x-2">
-          <Badge variant="secondary" className="bg-primary/10 text-primary hover:bg-primary/20 font-medium rounded-md shadow-none px-2 py-0.5 text-xs">
+          <Badge
+            variant="secondary"
+            className="bg-primary/10 text-primary hover:bg-primary/20 font-medium rounded-md shadow-none px-2 py-0.5 text-xs"
+          >
             {product.category}
           </Badge>
           <div className="flex items-center text-xs font-semibold text-amber-500">
@@ -49,7 +52,10 @@ export function ProductCard({ product }: { product: Product }) {
           </div>
         </div>
         <CardTitle className="line-clamp-1 text-lg font-bold transition-colors group-hover:text-primary">
-          <Link href={`/product/${product.id}`} className="before:absolute before:inset-0">
+          <Link
+            href={`/product/${product.id}`}
+            className="before:absolute before:inset-0"
+          >
             {product.name}
           </Link>
         </CardTitle>
@@ -57,7 +63,7 @@ export function ProductCard({ product }: { product: Product }) {
           {product.description}
         </CardDescription>
       </CardHeader>
-      
+
       <CardContent className="flex-1 p-5 pt-0">
         <div className="mt-2 flex items-baseline gap-2">
           <span className="text-xl font-extrabold tracking-tight text-foreground">
@@ -68,21 +74,23 @@ export function ProductCard({ product }: { product: Product }) {
           </span>
         </div>
       </CardContent>
-      
+
       <CardFooter className="flex-none p-5 pt-0 z-10 relative">
-        <Button 
-          type="button" 
+        <Button
+          type="button"
           onClick={(e) => {
             e.preventDefault();
             addToCart(product.id, 1);
           }}
           className={cn(
             "w-full gap-2 rounded-xl border border-transparent transition-all duration-300",
-            "bg-foreground text-background shadow-md hover:bg-primary hover:text-primary-foreground hover:shadow-lg dark:bg-white dark:text-black dark:hover:bg-primary dark:hover:text-primary-foreground"
+            "bg-foreground text-background shadow-md hover:bg-primary hover:text-primary-foreground hover:shadow-lg dark:bg-white dark:text-black dark:hover:bg-primary dark:hover:text-primary-foreground",
           )}
         >
           <ShoppingCart className="h-4 w-4" />
-          <span className="font-semibold">{locale === "th" ? "เพิ่มลงตะกร้า" : "Add to Cart"}</span>
+          <span className="font-semibold">
+            {locale === "th" ? "เพิ่มลงตะกร้า" : "Add to Cart"}
+          </span>
         </Button>
       </CardFooter>
     </Card>
