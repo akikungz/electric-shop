@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { PageShell } from "@/components/page-shell";
+import { ProductImage } from "@/components/product-image";
 import { useShop } from "@/context/shop-context";
 import { currency } from "@/lib/format";
 
@@ -44,10 +45,9 @@ export default function CartPage() {
                 key={item.productId}
                 className="soft-card grid gap-3 rounded-2xl p-4 md:grid-cols-[120px_1fr_auto] md:items-center"
               >
-                <div
-                  className="h-24 rounded-xl bg-cover bg-center"
-                  style={{ backgroundImage: `url(${productImage})` }}
-                />
+                <div className="h-24 overflow-hidden rounded-xl">
+                  <ProductImage src={productImage} alt={productName} />
+                </div>
                 <div>
                   <h2 className="text-lg font-semibold text-foreground">
                     {productName}

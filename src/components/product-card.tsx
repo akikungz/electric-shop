@@ -4,6 +4,7 @@ import { ShoppingCart, Star } from "lucide-react";
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ProductImage } from "@/components/product-image";
 import {
   Card,
   CardContent,
@@ -30,10 +31,10 @@ export function ProductCard({ product }: { product: Product }) {
         href={`/product/${product.id}`}
         className="relative block aspect-[4/3] overflow-hidden bg-slate-100 dark:bg-slate-800"
       >
-        <div
-          className="absolute inset-0 bg-cover bg-center transition-transform duration-500 group-hover:scale-110"
-          style={{ backgroundImage: `url(${product.image})` }}
-          aria-hidden
+        <ProductImage
+          src={product.image}
+          alt={product.name}
+          className="absolute inset-0 transition-transform duration-500 group-hover:scale-110"
         />
         <div className="absolute inset-0 bg-black/5 opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
       </Link>

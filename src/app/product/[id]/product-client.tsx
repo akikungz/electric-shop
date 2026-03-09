@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { PageShell } from "@/components/page-shell";
+import { ProductImage } from "@/components/product-image";
 import { useShop } from "@/context/shop-context";
 import { currency } from "@/lib/format";
 
@@ -29,22 +30,24 @@ export function ProductClient({ productId }: { productId: string }) {
       subtitle={locale === "th" ? "รายละเอียดสินค้า" : "Product details"}
     >
       <section className="grid gap-6 md:grid-cols-[1.2fr_1fr]">
-        <div
-          className="soft-card h-80 rounded-3xl bg-cover bg-center"
-          style={{ backgroundImage: `url(${product.image})` }}
-          aria-hidden
-        />
+        <div className="soft-card h-80 overflow-hidden rounded-3xl">
+          <ProductImage src={product.image} alt={product.name} />
+        </div>
         <div className="soft-card space-y-4 rounded-3xl p-6">
-          <p className="text-sm uppercase tracking-wide text-[#4a5a68]">
+          <p className="text-sm uppercase tracking-wide text-muted-foreground dark:text-slate-300">
             {product.category}
           </p>
-          <p className="text-2xl font-bold text-[#023047]">
+          <p className="text-2xl font-bold text-foreground dark:text-slate-100">
             {currency(product.price, locale)}
           </p>
-          <p className="text-sm text-[#334856]">{product.description}</p>
-          <p className="text-sm text-[#334856]">
+          <p className="text-sm text-muted-foreground dark:text-slate-300">
+            {product.description}
+          </p>
+          <p className="text-sm text-muted-foreground dark:text-slate-300">
             {locale === "th" ? "คงเหลือ" : "In stock"}:{" "}
-            <strong>{product.stockQty}</strong>
+            <strong className="text-foreground dark:text-slate-100">
+              {product.stockQty}
+            </strong>
           </p>
           <div className="flex items-center gap-3">
             <input
@@ -60,12 +63,12 @@ export function ProductClient({ productId }: { productId: string }) {
                   ),
                 )
               }
-              className="w-24 rounded-lg border border-black/15 bg-white px-3 py-2"
+              className="w-24 rounded-lg border border-border bg-background/85 px-3 py-2 text-foreground"
             />
             <button
               type="button"
               onClick={() => addToCart(product.id, qty)}
-              className="rounded-full bg-[#fb8500] px-5 py-2 font-semibold text-white"
+              className="rounded-full bg-[#fb8500] px-5 py-2 font-semibold text-white shadow-sm hover:brightness-105"
             >
               {locale === "th" ? "เพิ่มลงตะกร้า" : "Add to cart"}
             </button>

@@ -71,34 +71,28 @@ function bootstrapSchema(db: SQLiteDatabase) {
     CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
   `);
 
-  const count = db.prepare("SELECT COUNT(*) as count FROM products").get() as {
-    count: number;
-  };
+  const insert = db.prepare(`
+    INSERT OR IGNORE INTO products (id, name, category, price, stock_qty, image, description)
+    VALUES (@id, @name, @category, @price, @stockQty, @image, @description)
+  `);
 
-  if (count.count === 0) {
-    const insert = db.prepare(`
-      INSERT INTO products (id, name, category, price, stock_qty, image, description)
-      VALUES (@id, @name, @category, @price, @stockQty, @image, @description)
-    `);
-
-    db.exec("BEGIN");
-    try {
-      for (const item of seedProducts) {
-        insert.run({
-          id: item.id,
-          name: item.name,
-          category: item.category,
-          price: item.price,
-          stockQty: item.stockQty,
-          image: item.image,
-          description: item.description,
-        });
-      }
-      db.exec("COMMIT");
-    } catch (error) {
-      db.exec("ROLLBACK");
-      throw error;
+  db.exec("BEGIN");
+  try {
+    for (const item of seedProducts) {
+      insert.run({
+        id: item.id,
+        name: item.name,
+        category: item.category,
+        price: item.price,
+        stockQty: item.stockQty,
+        image: item.image,
+        description: item.description,
+      });
     }
+    db.exec("COMMIT");
+  } catch (error) {
+    db.exec("ROLLBACK");
+    throw error;
   }
 }
 
