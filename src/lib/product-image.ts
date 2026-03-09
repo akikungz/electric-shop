@@ -13,5 +13,4 @@ const PRODUCT_IMAGE_FALLBACK_SVG = `
   <text x='320' y='390' font-family='Arial, Helvetica, sans-serif' font-size='32' text-anchor='middle' fill='#334155'>No Image</text>
 </svg>`;
 
-export const DEFAULT_PRODUCT_IMAGE =
-  `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(PRODUCT_IMAGE_FALLBACK_SVG)}`;
+export const DEFAULT_PRODUCT_IMAGE = `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(PRODUCT_IMAGE_FALLBACK_SVG)}`;

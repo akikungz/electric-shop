@@ -6,7 +6,7 @@ import { useShop } from "@/context/shop-context";
 import { currency, mapOrderStatus, paymentLabel } from "@/lib/format";
 
 export default function OrderListPage() {
-  const { locale, orderHistory } = useShop();
+  const { locale, orderHistory, ordersLoading, isAuthenticated } = useShop();
 
   const orders = [...orderHistory].sort(
     (a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
@@ -29,7 +29,21 @@ export default function OrderListPage() {
           : "Track each order status and review your purchase history."
       }
     >
-      {orders.length === 0 ? (
+      {!isAuthenticated ? (
+        <section className="soft-card rounded-2xl p-6 text-sm text-muted-foreground">
+          {locale === "th"
+            ? "กรุณาเข้าสู่ระบบเพื่อดูคำสั่งซื้อ"
+            : "Please sign in to view your orders."}
+        </section>
+      ) : null}
+
+      {isAuthenticated && ordersLoading ? (
+        <section className="soft-card rounded-2xl p-6 text-sm text-muted-foreground">
+          {locale === "th" ? "กำลังโหลดคำสั่งซื้อ..." : "Loading orders..."}
+        </section>
+      ) : null}
+
+      {isAuthenticated && !ordersLoading && orders.length === 0 ? (
         <section className="soft-card rounded-2xl p-6 text-sm text-muted-foreground">
           {locale === "th" ? "ยังไม่มีคำสั่งซื้อ" : "No orders yet."}
           <div className="mt-4">
@@ -41,7 +55,9 @@ export default function OrderListPage() {
             </Link>
           </div>
         </section>
-      ) : (
+      ) : null}
+
+      {isAuthenticated && !ordersLoading && orders.length > 0 ? (
         <section className="space-y-4">
           {orders.map((order) => (
             <article
@@ -89,7 +105,7 @@ export default function OrderListPage() {
             </article>
           ))}
         </section>
-      )}
+      ) : null}
     </PageShell>
   );
 }

@@ -5,7 +5,14 @@ import { useEffect, useState } from "react";
 import { PageShell } from "@/components/page-shell";
 import { useShop } from "@/context/shop-context";
 import { paymentLabel } from "@/lib/format";
-import type { UserProfile } from "@/types/domain";
+import type { PaymentMethod, UserProfile } from "@/types/domain";
+
+const AVAILABLE_PAYMENT_METHODS: PaymentMethod[] = [
+  "credit-card",
+  "debit-card",
+  "qr-code",
+  "cod",
+];
 
 export default function ProfilePage() {
   const {
@@ -186,16 +193,35 @@ export default function ProfilePage() {
             <h2 className="text-lg font-semibold text-foreground">
               {locale === "th" ? "วิธีชำระเงิน" : "Payment Methods"}
             </h2>
-            <ul className="mt-3 space-y-2 text-sm text-muted-foreground">
-              {profile.paymentMethods.map((method) => (
-                <li
-                  key={method}
-                  className="rounded-lg border border-border bg-background/70 p-2 text-foreground"
-                >
-                  {paymentLabel(method, locale)}
-                </li>
-              ))}
-            </ul>
+            <div className="mt-3 space-y-2 text-sm text-muted-foreground">
+              {AVAILABLE_PAYMENT_METHODS.map((method) => {
+                const checked = draft.paymentMethods.includes(method);
+                return (
+                  <label
+                    key={method}
+                    className="flex cursor-pointer items-center gap-2 rounded-lg border border-border bg-background/70 p-2 text-foreground"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={checked}
+                      onChange={(event) => {
+                        const next = event.target.checked
+                          ? [...draft.paymentMethods, method]
+                          : draft.paymentMethods.filter(
+                              (item) => item !== method,
+                            );
+
+                        setDraft({
+                          ...draft,
+                          paymentMethods: next,
+                        });
+                      }}
+                    />
+                    {paymentLabel(method, locale)}
+                  </label>
+                );
+              })}
+            </div>
           </div>
 
           <div className="soft-card rounded-2xl p-5 text-sm text-muted-foreground">

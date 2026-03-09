@@ -2,9 +2,9 @@
 
 import { ShoppingCart, Star } from "lucide-react";
 import Link from "next/link";
+import { ProductImage } from "@/components/product-image";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { ProductImage } from "@/components/product-image";
 import {
   Card,
   CardContent,

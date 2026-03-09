@@ -30,6 +30,8 @@ interface CheckoutPayload {
 interface ShopContextValue {
   locale: Locale;
   toggleLocale: () => void;
+  productsLoading: boolean;
+  ordersLoading: boolean;
   cart: CartItem[];
   cartCount: number;
   subtotal: number;
@@ -62,7 +64,9 @@ interface ShopContextValue {
   updateProfile: (
     profile: UserProfile,
   ) => Promise<{ success: boolean; message?: string }>;
-  checkout: (payload: CheckoutPayload) => Promise<string | null>;
+  checkout: (
+    payload: CheckoutPayload,
+  ) => Promise<{ orderId: string; nextPath: string } | null>;
   fetchOrderById: (id: string) => Promise<Order | null>;
   orderHistory: Order[];
   getOrderById: (id: string) => Order | undefined;
@@ -91,36 +95,82 @@ const ShopContext = createContext<ShopContextValue | null>(null);
 
 const CART_STORAGE_KEY = "electric-shop-cart";
 const LOCALE_STORAGE_KEY = "electric-shop-locale";
-const ORDERS_STORAGE_KEY = "electric-shop-orders";
 
 export function ShopProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
   const [locale, setLocale] = useState<Locale>("en");
+  const [productsLoading, setProductsLoading] = useState(true);
+  const [ordersLoading, setOrdersLoading] = useState(false);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [products, setProducts] = useState<Product[]>([]);
   const [profile, setProfile] = useState<UserProfile>(defaultProfile);
+  const [authUserId, setAuthUserId] = useState<string | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isCartHydrated, setIsCartHydrated] = useState(false);
   const [authLoading, setAuthLoading] = useState(true);
   const [orderHistory, setOrderHistory] = useState<Order[]>([]);
   const pathname = usePathname();
   const router = useRouter();
+
+  const fetchUserOrders = useCallback(async () => {
+    setOrdersLoading(true);
+    try {
+      const response = await fetch("/api/v1/orders", {
+        cache: "no-store",
+      });
+
+      const payload = (await response.json()) as {
+        success?: boolean;
+        data?: Order[];
+      };
+
+      if (response.ok && payload.success && Array.isArray(payload.data)) {
+        setOrderHistory(payload.data);
+      } else {
+        setOrderHistory([]);
+      }
+    } catch {
+      setOrderHistory([]);
+    } finally {
+      setOrdersLoading(false);
+    }
+  }, []);
+
+  const fetchUserCart = useCallback(async () => {
+    try {
+      const response = await fetch("/api/v1/cart", {
+        cache: "no-store",
+      });
+      const payload = (await response.json()) as {
+        success?: boolean;
+        data?: CartItem[];
+      };
+
+      if (response.ok && payload.success && Array.isArray(payload.data)) {
+        setCart(payload.data);
+      } else {
+        setCart([]);
+      }
+    } catch {
+      setCart([]);
+    } finally {
+      setIsCartHydrated(true);
+    }
+  }, []);
 
   useEffect(() => {
     const cachedCart = localStorage.getItem(CART_STORAGE_KEY);
     const cachedLocale = localStorage.getItem(
       LOCALE_STORAGE_KEY,
     ) as Locale | null;
-    const cachedOrders = localStorage.getItem(ORDERS_STORAGE_KEY);
 
     if (cachedCart) {
       setCart(JSON.parse(cachedCart));
     }
+    setIsCartHydrated(true);
     if (cachedLocale === "en" || cachedLocale === "th") {
       setLocale(cachedLocale);
       document.documentElement.lang = cachedLocale;
-    }
-    if (cachedOrders) {
-      setOrderHistory(JSON.parse(cachedOrders));
     }
 
     void fetch("/api/v1/auth/me", { cache: "no-store" })
@@ -134,27 +184,36 @@ export function ShopProvider({ children }: { children: ReactNode }) {
         (
           payload: {
             success?: boolean;
-            data?: UserProfile;
+            data?: UserProfile & { id?: string };
           } | null,
         ) => {
           if (payload?.success && payload.data) {
             setProfile(payload.data);
+            setAuthUserId(payload.data.id ?? null);
             setIsAuthenticated(true);
+            setIsCartHydrated(false);
+            void fetchUserCart();
+            void fetchUserOrders();
           } else {
             setProfile(defaultProfile);
+            setAuthUserId(null);
             setIsAuthenticated(false);
+            setOrderHistory([]);
           }
         },
       )
       .catch(() => {
         setProfile(defaultProfile);
+        setAuthUserId(null);
         setIsAuthenticated(false);
+        setOrderHistory([]);
       })
       .finally(() => {
         setAuthLoading(false);
       });
 
     // Initial product load comes from backend API.
+    setProductsLoading(true);
     void fetch("/api/v1/products", { cache: "no-store" })
       .then((response) => response.json())
       .then(
@@ -171,21 +230,35 @@ export function ShopProvider({ children }: { children: ReactNode }) {
       )
       .catch(() => {
         setProducts([]);
+      })
+      .finally(() => {
+        setProductsLoading(false);
       });
-  }, []);
+  }, [fetchUserCart, fetchUserOrders]);
 
   useEffect(() => {
+    if (!isCartHydrated) {
+      return;
+    }
+
+    if (isAuthenticated && authUserId) {
+      void fetch("/api/v1/cart", {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(cart),
+      });
+      return;
+    }
+
     localStorage.setItem(CART_STORAGE_KEY, JSON.stringify(cart));
-  }, [cart]);
+  }, [authUserId, cart, isAuthenticated, isCartHydrated]);
 
   useEffect(() => {
     localStorage.setItem(LOCALE_STORAGE_KEY, locale);
     document.documentElement.lang = locale;
   }, [locale]);
-
-  useEffect(() => {
-    localStorage.setItem(ORDERS_STORAGE_KEY, JSON.stringify(orderHistory));
-  }, [orderHistory]);
 
   const login = useCallback(
     async (identity: string, password: string) => {
@@ -199,7 +272,7 @@ export function ShopProvider({ children }: { children: ReactNode }) {
 
       const payload = (await response.json()) as {
         success?: boolean;
-        data?: UserProfile;
+        data?: UserProfile & { id?: string };
         error?: {
           message?: string;
         };
@@ -219,14 +292,18 @@ export function ShopProvider({ children }: { children: ReactNode }) {
       }
 
       setProfile(payload.data);
+      setAuthUserId(payload.data.id ?? null);
       setIsAuthenticated(true);
+      setIsCartHydrated(false);
+      await fetchUserCart();
+      await fetchUserOrders();
       toast({
         title: "Logged in",
         variant: "success",
       });
       return { success: true };
     },
-    [toast],
+    [fetchUserCart, fetchUserOrders, toast],
   );
 
   const register = useCallback(
@@ -246,7 +323,7 @@ export function ShopProvider({ children }: { children: ReactNode }) {
 
       const payload = (await response.json()) as {
         success?: boolean;
-        data?: UserProfile;
+        data?: UserProfile & { id?: string };
         error?: {
           message?: string;
         };
@@ -265,14 +342,18 @@ export function ShopProvider({ children }: { children: ReactNode }) {
       }
 
       setProfile(payload.data);
+      setAuthUserId(payload.data.id ?? null);
       setIsAuthenticated(true);
+      setIsCartHydrated(false);
+      await fetchUserCart();
+      await fetchUserOrders();
       toast({
         title: "Account created",
         variant: "success",
       });
       return { success: true };
     },
-    [toast],
+    [fetchUserCart, fetchUserOrders, toast],
   );
 
   const logout = useCallback(async () => {
@@ -280,7 +361,11 @@ export function ShopProvider({ children }: { children: ReactNode }) {
       method: "POST",
     });
     setIsAuthenticated(false);
+    setAuthUserId(null);
     setProfile(defaultProfile);
+    setOrderHistory([]);
+    setCart([]);
+    setIsCartHydrated(true);
     toast({
       title: "Logged out",
       variant: "info",
@@ -468,6 +553,14 @@ export function ShopProvider({ children }: { children: ReactNode }) {
 
   const checkout = useCallback(
     async ({ address, phone, paymentMethod }: CheckoutPayload) => {
+      if (!isAuthenticated) {
+        toast({
+          title: "Please login before checkout",
+          variant: "error",
+        });
+        return null;
+      }
+
       if (!cart.length) {
         toast({
           title: "Cart is empty",
@@ -498,6 +591,14 @@ export function ShopProvider({ children }: { children: ReactNode }) {
       };
 
       if (!response.ok || !payload.success || !payload.data) {
+        if (response.status === 401) {
+          toast({
+            title: "Session expired",
+            description: "Please login again.",
+            variant: "error",
+          });
+          return null;
+        }
         toast({
           title: "Checkout failed",
           variant: "error",
@@ -513,6 +614,7 @@ export function ShopProvider({ children }: { children: ReactNode }) {
         phone,
         address,
       }));
+      await fetchUserOrders();
       setCart([]);
       toast({
         title: "Order placed",
@@ -539,41 +641,37 @@ export function ShopProvider({ children }: { children: ReactNode }) {
           // Keep current product snapshot when refresh fails.
         });
 
-      return createdOrder.id;
-    },
-    [cart, toast],
-  );
-
-  const fetchOrderById = useCallback(
-    async (id: string) => {
-      const existing = orderHistory.find((order) => order.id === id);
-      if (existing) {
-        return existing;
-      }
-
-      const response = await fetch(`/api/v1/orders/${id}`, {
-        cache: "no-store",
-      });
-      const payload = (await response.json()) as {
-        success?: boolean;
-        data?: Order;
+      return {
+        orderId: createdOrder.id,
+        nextPath:
+          paymentMethod === "cod"
+            ? `/order/${createdOrder.id}/confirmation`
+            : `/payment/process?orderId=${createdOrder.id}&method=${paymentMethod}`,
       };
-
-      if (!response.ok || !payload.success || !payload.data) {
-        return null;
-      }
-
-      setOrderHistory((current) => {
-        if (current.some((order) => order.id === payload.data?.id)) {
-          return current;
-        }
-        return [payload.data as Order, ...current];
-      });
-
-      return payload.data;
     },
-    [orderHistory],
+    [cart, fetchUserOrders, isAuthenticated, toast],
   );
+
+  const fetchOrderById = useCallback(async (id: string) => {
+    const response = await fetch(`/api/v1/orders/${id}`, {
+      cache: "no-store",
+    });
+    const payload = (await response.json()) as {
+      success?: boolean;
+      data?: Order;
+    };
+
+    if (!response.ok || !payload.success || !payload.data) {
+      return null;
+    }
+
+    setOrderHistory((current) => {
+      const filtered = current.filter((order) => order.id !== payload.data?.id);
+      return [payload.data as Order, ...filtered];
+    });
+
+    return payload.data;
+  }, []);
 
   const getOrderById = useCallback(
     (id: string) => {
@@ -622,6 +720,8 @@ export function ShopProvider({ children }: { children: ReactNode }) {
     () => ({
       locale,
       toggleLocale,
+      productsLoading,
+      ordersLoading,
       cart,
       cartCount,
       subtotal,
@@ -672,6 +772,8 @@ export function ShopProvider({ children }: { children: ReactNode }) {
       searchProducts,
       subtotal,
       toggleLocale,
+      productsLoading,
+      ordersLoading,
       updateProfile,
       updateCartItem,
       clearCart,

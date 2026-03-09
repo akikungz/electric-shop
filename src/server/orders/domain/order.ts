@@ -10,6 +10,7 @@ export interface CreateOrderInput {
   paymentMethod: PaymentMethod;
   contactPhone: string;
   deliveryAddress: Address;
+  userId?: string | null;
 }
 
 export interface OrderEntity extends Order {

@@ -29,13 +29,31 @@ function bootstrapSchema(db: SQLiteDatabase) {
 
     CREATE TABLE IF NOT EXISTS orders (
       id TEXT PRIMARY KEY,
+      user_id TEXT,
       total_amount INTEGER NOT NULL,
       payment_method TEXT NOT NULL,
       payment_status TEXT NOT NULL,
       order_status TEXT NOT NULL,
       delivery_address TEXT NOT NULL,
       contact_phone TEXT NOT NULL,
-      created_at TEXT NOT NULL
+      created_at TEXT NOT NULL,
+      FOREIGN KEY(user_id) REFERENCES users(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS carts (
+      user_id TEXT PRIMARY KEY,
+      updated_at TEXT NOT NULL,
+      FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE
+    );
+
+    CREATE TABLE IF NOT EXISTS cart_items (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      user_id TEXT NOT NULL,
+      product_id TEXT NOT NULL,
+      quantity INTEGER NOT NULL,
+      FOREIGN KEY(user_id) REFERENCES users(id) ON DELETE CASCADE,
+      FOREIGN KEY(product_id) REFERENCES products(id),
+      UNIQUE(user_id, product_id)
     );
 
     CREATE TABLE IF NOT EXISTS order_items (
@@ -69,7 +87,17 @@ function bootstrapSchema(db: SQLiteDatabase) {
 
     CREATE INDEX IF NOT EXISTS idx_order_items_order_id ON order_items(order_id);
     CREATE INDEX IF NOT EXISTS idx_sessions_user_id ON sessions(user_id);
+    CREATE INDEX IF NOT EXISTS idx_orders_user_id ON orders(user_id);
+    CREATE INDEX IF NOT EXISTS idx_cart_items_user_id ON cart_items(user_id);
   `);
+
+  // Backward-compatible migrations for existing local DB files.
+  const orderColumns = db.prepare("PRAGMA table_info(orders)").all() as Array<{
+    name: string;
+  }>;
+  if (!orderColumns.some((column) => column.name === "user_id")) {
+    db.exec("ALTER TABLE orders ADD COLUMN user_id TEXT");
+  }
 
   const insert = db.prepare(`
     INSERT OR IGNORE INTO products (id, name, category, price, stock_qty, image, description)

@@ -4,18 +4,21 @@ import { useSearchParams } from "next/navigation";
 import { useMemo, useState } from "react";
 import { PageShell } from "@/components/page-shell";
 import { ProductCard } from "@/components/product-card";
+import { Button } from "@/components/ui/button";
 import { useShop } from "@/context/shop-context";
 
 export function SearchClient() {
-  const { locale, searchProducts, navigate } = useShop();
+  const { locale, searchProducts, navigate, productsLoading } = useShop();
   const params = useSearchParams();
   const initialKeyword = params.get("q") ?? "";
   const [keyword, setKeyword] = useState(initialKeyword);
+  const [visibleCount, setVisibleCount] = useState(9);
 
   const results = useMemo(
     () => searchProducts(keyword),
     [keyword, searchProducts],
   );
+  const visibleResults = results.slice(0, visibleCount);
 
   return (
     <PageShell
@@ -49,11 +52,35 @@ export function SearchClient() {
         </form>
       </div>
 
+      {productsLoading ? (
+        <p className="text-sm text-muted-foreground">
+          {locale === "th" ? "กำลังโหลดสินค้า..." : "Loading products..."}
+        </p>
+      ) : null}
+
+      {!productsLoading && results.length === 0 ? (
+        <p className="text-sm text-muted-foreground">
+          {locale === "th" ? "ไม่พบสินค้าที่ค้นหา" : "No matching products found."}
+        </p>
+      ) : null}
+
       <section className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
-        {results.map((product) => (
+        {visibleResults.map((product) => (
           <ProductCard key={product.id} product={product} />
         ))}
       </section>
+
+      {!productsLoading && visibleResults.length < results.length ? (
+        <div className="mt-6">
+          <Button
+            type="button"
+            variant="outline"
+            onClick={() => setVisibleCount((current) => current + 6)}
+          >
+            {locale === "th" ? "โหลดเพิ่ม" : "Load More"}
+          </Button>
+        </div>
+      ) : null}
     </PageShell>
   );
 }

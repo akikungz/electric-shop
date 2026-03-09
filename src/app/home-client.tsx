@@ -2,12 +2,18 @@
 
 import { ArrowRight, Sparkles, Zap } from "lucide-react";
 import Link from "next/link";
+import { useMemo, useState } from "react";
 import { ProductCard } from "@/components/product-card";
 import { Button } from "@/components/ui/button";
 import { useShop } from "@/context/shop-context";
 
 export function HomeClient() {
-  const { locale, products } = useShop();
+  const { locale, products, productsLoading } = useShop();
+  const [visibleCount, setVisibleCount] = useState(12);
+  const visibleProducts = useMemo(
+    () => products.slice(0, visibleCount),
+    [products, visibleCount],
+  );
 
   return (
     <main className="w-full flex-1">
@@ -85,8 +91,20 @@ export function HomeClient() {
           </Button>
         </div>
 
+        {productsLoading ? (
+          <p className="text-muted-foreground">
+            {locale === "th" ? "กำลังโหลดสินค้า..." : "Loading products..."}
+          </p>
+        ) : null}
+
+        {!productsLoading && products.length === 0 ? (
+          <p className="text-muted-foreground">
+            {locale === "th" ? "ยังไม่มีสินค้า" : "No products found."}
+          </p>
+        ) : null}
+
         <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {products.map((product, index) => (
+          {visibleProducts.map((product, index) => (
             <div
               key={product.id}
               style={{ animationDelay: `${index * 50}ms` }}
@@ -96,6 +114,18 @@ export function HomeClient() {
             </div>
           ))}
         </div>
+
+        {!productsLoading && visibleProducts.length < products.length ? (
+          <div className="mt-8 flex justify-center">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setVisibleCount((current) => current + 8)}
+            >
+              {locale === "th" ? "โหลดเพิ่ม" : "Load More"}
+            </Button>
+          </div>
+        ) : null}
 
         <div className="mt-10 flex justify-center md:hidden">
           <Button variant="outline" className="w-full font-semibold" asChild>

@@ -76,14 +76,14 @@ export default function CheckoutPage() {
         className="mx-auto max-w-3xl"
         onSubmit={async (event) => {
           event.preventDefault();
-          const orderId = await checkout({
+          const result = await checkout({
             address: { line1, district, province, postalCode },
             phone,
             paymentMethod,
           });
 
-          if (orderId) {
-            navigate(`/order/${orderId}/confirmation`);
+          if (result) {
+            navigate(result.nextPath);
           }
         }}
       >
